@@ -69,19 +69,19 @@ function addressFromRequest(req: express.Request) {
 }
 
 if (!address) {
-	logger.error('You must set the ADDRESS environment variable.');
-	process.exit(1);
+	logger.info('ADDRESS environment variable not set.');
+	logger.info('Advertised server address will be derived from HTTP request headers.');
 }
 
-app.get('/', (_, res) => {
-	res.render('index', { connectionCount, address });
+app.get('/', (req, res) => {
+	res.render('index', { connectionCount, address: (address || addressFromRequest(req)), headers: req.headers });
 });
 
 app.get('/health', (req, res) => {
 	res.json({
 		uptime: process.uptime(),
 		connectionCount,
-		address,
+		address: (address || addressFromRequest(req)),
 		name: process.env.NAME
 	});
 })
@@ -189,5 +189,5 @@ io.on('connection', (socket: socketIO.Socket) => {
 
 server.listen(port);
 (async () => {
-	logger.info('CrewLink Server started: %s', address);
+	logger.info('CrewLink Server started: %s', address || '[ADDRESS not set]');
 })();
